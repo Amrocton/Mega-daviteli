@@ -73,9 +73,11 @@ class Tile(pygame.sprite.Sprite):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, lp, color):
+    def __init__(self, lp, color, spawn_points, first_spawn):
         super().__init__(player_group, all_sprites)
-        self.image = load_image(f'Gnomes/{color}/idle-0.png')  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        self.lifes = lp
+        self.image = load_image(f'Gnomes/{color}/idle-0.png')  # !!!тут должна быть анимация!!!
+        self.rect = self.image.get_rect()
 
 
 all_sprites = pygame.sprite.Group()
@@ -111,8 +113,7 @@ def start_screen(screen):
                   "По газону МОЖНО ходить",
                   "Коробки по два метра в высоту, навернёшься",
                   "Прежде чем начать, введите название уровня в консоли!!!"]
-    back_surf = pygame.image.load(f'data/background{levelnum}.jpg')
-    back_rect = back_surf.get_rect(center=(400, 250))
+    screen.fill(pygame.Color('darkseagreen'))
     screen.blit(back_surf, back_rect)
     font = pygame.font.Font(None, 30)
     text_coord = 50
@@ -151,18 +152,26 @@ def game_start(screen):
 
 def game_loop(screen, playersnum, lp):
     spawn_points = generate_level(load_level(str(levelnum)))
+    first_spawn = spawn_points.copy()
+    random.shuffle(first_spawn)
     if playersnum >= 1:
-        red_gnome = Player(lp, 'red')
+        red_gnome = Player(lp, 'red', spawn_points, first_spawn.pop(0))
     if playersnum >= 2:
-        green_gnome = Player(lp, 'green')
+        green_gnome = Player(lp, 'green', spawn_points, first_spawn.pop(0))
+    if playersnum >= 3:
+        blue_gnome = Player(lp, 'blue', spawn_points, first_spawn.pop(0))
+    if playersnum == 4:
+        yellow_gnome = Player(lp, 'yellow', spawn_points, first_spawn.pop(0))
+
     while True:
-        screen.fill((0, 0, 0))
         back_surf = pygame.image.load(f'data/background{levelnum}.jpg')
         back_rect = back_surf.get_rect(center=(400, 250))
         screen.blit(back_surf, back_rect)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
+        tiles_group.draw(screen)
+        player_group.draw(screen)
         pygame.display.flip()
 
 
