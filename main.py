@@ -78,6 +78,8 @@ class Player(pygame.sprite.Sprite):
         self.lifes = lp
         self.image = load_image(f'Gnomes/{color}/idle-0.png')  # !!!тут должна быть анимация!!!
         self.rect = self.image.get_rect()
+        self.rect.x = first_spawn[0]
+        self.rect.y = first_spawn[1]
 
 
 all_sprites = pygame.sprite.Group()
