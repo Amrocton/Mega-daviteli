@@ -75,7 +75,7 @@ class Tile(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     def __init__(self, lp, color):
         super().__init__(player_group, all_sprites)
-        self.image = load_image(f'{color}/idle-0.png')  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        self.image = load_image(f'Gnomes/{color}/idle-0.png')  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 all_sprites = pygame.sprite.Group()
@@ -150,11 +150,20 @@ def game_start(screen):
 
 
 def game_loop(screen, playersnum, lp):
-    spawn_points = generate_level(load_level(levelnum))
+    spawn_points = generate_level(load_level(str(levelnum)))
     if playersnum >= 1:
         red_gnome = Player(lp, 'red')
     if playersnum >= 2:
         green_gnome = Player(lp, 'green')
+    while True:
+        screen.fill((0, 0, 0))
+        back_surf = pygame.image.load(f'data/background{levelnum}.jpg')
+        back_rect = back_surf.get_rect(center=(400, 250))
+        screen.blit(back_surf, back_rect)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+        pygame.display.flip()
 
 
 game_loop(screen, 2, 3)
