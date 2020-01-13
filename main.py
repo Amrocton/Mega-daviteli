@@ -3,6 +3,7 @@ import os
 import random
 import sys
 
+gnomes = []
 pygame.init()
 screen = pygame.display.set_mode((800, 500))
 clock = pygame.time.Clock()
@@ -118,7 +119,6 @@ class Player(pygame.sprite.Sprite):
         else:
             self.dead = True
 
-
     def on_land(self):
         if pygame.sprite.spritecollideany(self, land_group):
             land = pygame.sprite.spritecollideany(self, land_group)
@@ -142,7 +142,7 @@ class Player(pygame.sprite.Sprite):
             if self.velocity_index >= 20:
                 self.falling = True
 
-    def move(self):
+    def move(self, gnomes):
         if self.jumping or self.falling:
             speed = 4
         else:
@@ -163,21 +163,29 @@ class Player(pygame.sprite.Sprite):
                 self.rect.x, self.rect.y = x, y
         if self.rect.y > 510:
             self.rebirth()
-        '''if pygame.sprite.spritecollideany(self, player_group):
-            other = pygame.sprite.spritecollideany(self, player_group)
-            if obj_upper(self, self.rect.x, self.rect.y, 30, 30, other.rect.x, other.rect.y, 30, 30):
-                other.rebirth()'''
+        for other in gnomes:
+            if pygame.sprite.collide_rect(self, other) and self != other:
+                if self.falling:
+                    if other.rect.y > self.rect.y:
+                        other.rebirth()
+                        self.velocity_index = 0
+                elif obj_upper(self, self.rect.x, self.rect.y, 30, 30, other.rect.x, other.rect.y,
+                               30, 30):
+                    self.rect.y = other.rect.y - 29
+                    self.jumping = False
+                self.rect.x, self.rect.y = x, y
 
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 land_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
-'''sg_red = pygame.sprite.Group()
+sg_red = pygame.sprite.Group()
 sg_green = pygame.sprite.Group()
 sg_blue = pygame.sprite.Group()
 sg_yellow = pygame.sprite.Group()
-'''
+gnome_list = [sg_red, sg_green, sg_blue, sg_yellow]
+
 
 def generate_level(level):
     spawn_coords = []
@@ -193,7 +201,7 @@ def generate_level(level):
     return spawn_coords
 
 
-FPS = 1
+FPS = 60
 
 
 def start_screen(screen):
@@ -324,12 +332,21 @@ def game_loop(screen, playersnum, lp):
                         yellow_gnome.move_right = False
 
         for gnome in gnomes:
-            gnome.move()
+            gnome.move(gnomes)
             gnome.on_land()
+            if gnome.dead:
+                gnomes.remove(gnome)
+                player_group.remove(gnome)
+            for other in gnomes:
+                if pygame.sprite.collide_rect(gnome, other) and gnome != other:
+                    gnome.rect.y -= 31
+                    gnome.jumping = True
+                    gnome.velocity_index = 0
+                    break
         tiles_group.draw(screen)
         player_group.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
 
 
-game_loop(screen, 4, 3)
+game_loop(screen, 4, 10)
