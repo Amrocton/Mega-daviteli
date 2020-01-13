@@ -30,7 +30,6 @@ def text_objects(text, font):
 def button(msg, x, y, w, h, ic, ac, action=None):
     mouse = pygame.mouse.get_pos()
     click = pygame.mouse.get_pressed()
-    print(click)
     if x + w > mouse[0] > x and y + h > mouse[1] > y:
         pygame.draw.rect(screen, ac, (x, y, w, h))
 
@@ -164,17 +163,21 @@ class Player(pygame.sprite.Sprite):
                 self.rect.x, self.rect.y = x, y
         if self.rect.y > 510:
             self.rebirth()
+        '''if pygame.sprite.spritecollideany(self, player_group):
+            other = pygame.sprite.spritecollideany(self, player_group)
+            if obj_upper(self, self.rect.x, self.rect.y, 30, 30, other.rect.x, other.rect.y, 30, 30):
+                other.rebirth()'''
 
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 land_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
-sg_red = pygame.sprite.Group()
+'''sg_red = pygame.sprite.Group()
 sg_green = pygame.sprite.Group()
 sg_blue = pygame.sprite.Group()
 sg_yellow = pygame.sprite.Group()
-
+'''
 
 def generate_level(level):
     spawn_coords = []
@@ -190,7 +193,7 @@ def generate_level(level):
     return spawn_coords
 
 
-FPS = 60
+FPS = 1
 
 
 def start_screen(screen):
@@ -329,4 +332,4 @@ def game_loop(screen, playersnum, lp):
         clock.tick(FPS)
 
 
-game_loop(screen, 2, 3)
+game_loop(screen, 4, 3)
