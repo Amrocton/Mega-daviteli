@@ -12,12 +12,14 @@ back_rect = back_surf.get_rect(center=(400, 250))
 screen.blit(back_surf, back_rect)
 # вверх-влево-вправо-вниз
 move_keys = {'red': [pygame.K_w, pygame.K_a, pygame.K_d, pygame.K_s],
-             'green': [pygame.K_i, pygame.K_j, pygame.K_l, pygame.K_k]}
+             'green': [pygame.K_p, pygame.K_l, 39, 59],
+             'blue': [pygame.K_y, pygame.K_g, pygame.K_j, pygame.K_h],
+             'yellow': [pygame.K_UP, pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN]}
 
 
 def obj_upper(faller, x1, y1, w1, h1, x2, y2, w2, h2):
     return y2 <= y1 + h1 <= y2 + h2 and (
-                x2 <= x1 <= x2 + w2 or x2 <= x1 + w1 <= x2 + w2) or faller.falling
+            x2 <= x1 <= x2 + w2 or x2 <= x1 + w1 <= x2 + w2) or faller.falling
 
 
 def text_objects(text, font):
@@ -70,7 +72,8 @@ tile_images = {
 tile_w = 80
 tile_h = 50
 velocity = list(
-    [-20.5, -19, -18.5, -17.5, -17, -16.5, -16, -15.5, -15, -14.5, -14, -13.5, -13, -12.5, 8, -5, -3,
+    [-20.5, -19, -18.5, -17.5, -17, -16.5, -16, -15.5, -15, -14.5, -14, -13.5, -13, -12.5, -8, -5,
+     -3,
      -2, -1, 0, 1, 2, 3, 5, 8, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16, 16.5, 17, 17.5, 18.5, 19,
      20.5]
 )
@@ -116,6 +119,7 @@ class Player(pygame.sprite.Sprite):
         else:
             self.dead = True
 
+
     def on_land(self):
         if pygame.sprite.spritecollideany(self, land_group):
             land = pygame.sprite.spritecollideany(self, land_group)
@@ -140,11 +144,15 @@ class Player(pygame.sprite.Sprite):
                 self.falling = True
 
     def move(self):
+        if self.jumping or self.falling:
+            speed = 4
+        else:
+            speed = 8
         x, y = self.rect.x, self.rect.y
         if self.move_left:
-            self.rect.x -= 5
+            self.rect.x -= speed
         if self.move_right:
-            self.rect.x += 5
+            self.rect.x += speed
         self.do_jumping()
         if self.go_down:
             self.rect.y += 80
