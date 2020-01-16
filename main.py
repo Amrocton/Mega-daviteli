@@ -10,12 +10,14 @@ clock = pygame.time.Clock()
 levelnum = random.randint(1, 2)
 back_surf = pygame.image.load(f'data/background{levelnum}.jpg')
 back_rect = back_surf.get_rect(center=(400, 250))
-screen.blit(back_surf, back_rect)
 # вверх-влево-вправо-вниз
 move_keys = {'red': [pygame.K_w, pygame.K_a, pygame.K_d, pygame.K_s],
              'green': [pygame.K_p, pygame.K_l, 39, 59],
              'blue': [pygame.K_y, pygame.K_g, pygame.K_j, pygame.K_h],
              'yellow': [pygame.K_UP, pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN]}
+hit_sound = pygame.mixer.Sound('data/sound/Hit.wav')
+select_sound = pygame.mixer.Sound('data/sound/Select.wav')
+press_sound = pygame.mixer.Sound('data/sound/Press.wav')
 
 
 def obj_upper(faller, x1, y1, w1, h1, x2, y2, w2, h2):
@@ -33,8 +35,9 @@ def button(msg, x, y, w, h, ic, ac, action=None):
     click = pygame.mouse.get_pressed()
     if x + w > mouse[0] > x and y + h > mouse[1] > y:
         pygame.draw.rect(screen, ac, (x, y, w, h))
-
+        pygame.mixer.Sound.play(select_sound)
         if click[0] == 1 and action != None:
+            pygame.mixer.Sound.play(press_sound)
             action()
     else:
         pygame.draw.rect(screen, ic, (x, y, w, h))
@@ -168,7 +171,8 @@ class Player(pygame.sprite.Sprite):
                 if self.falling:
                     if other.rect.y > self.rect.y:
                         other.rebirth()
-                        self.velocity_index = 0
+                        self.velocity_index = 13
+                        pygame.mixer.Sound.play(hit_sound)
                 elif obj_upper(self, self.rect.x, self.rect.y, 30, 30, other.rect.x, other.rect.y,
                                30, 30):
                     self.rect.y = other.rect.y - 29
@@ -247,6 +251,9 @@ def game_start(screen):
 
 
 def game_loop(screen, playersnum, lp):
+    paused = False
+    pygame.mixer.music.load('data/sound/Kirby.mp3')
+    pygame.mixer.music.play(-1)
     clock = pygame.time.Clock()
     spawn_points = generate_level(load_level(str(levelnum)))
     first_spawn = spawn_points.copy()
@@ -269,46 +276,58 @@ def game_loop(screen, playersnum, lp):
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN:
-                if event.key == red_gnome.move_key[0] and red_gnome.jumping is False:
-                    red_gnome.jumping = True
-                if event.key == green_gnome.move_key[0] and green_gnome.jumping is False:
-                    green_gnome.jumping = True
-                if blue_gnome:
-                    if event.key == blue_gnome.move_key[0] and blue_gnome.jumping is False:
-                        blue_gnome.jumping = True
-                if yellow_gnome:
-                    if event.key == yellow_gnome.move_key[0] and yellow_gnome.jumping is False:
-                        yellow_gnome.jumping = True
-                if event.key == red_gnome.move_key[1]:
-                    red_gnome.move_left = True
-                if event.key == green_gnome.move_key[1]:
-                    green_gnome.move_left = True
-                if blue_gnome:
-                    if event.key == blue_gnome.move_key[1]:
-                        blue_gnome.move_left = True
-                if yellow_gnome:
-                    if event.key == yellow_gnome.move_key[1]:
-                        yellow_gnome.move_left = True
-                if event.key == red_gnome.move_key[2]:
-                    red_gnome.move_right = True
-                if event.key == green_gnome.move_key[2]:
-                    green_gnome.move_right = True
-                if blue_gnome:
-                    if event.key == blue_gnome.move_key[2]:
-                        blue_gnome.move_right = True
-                if yellow_gnome:
-                    if event.key == yellow_gnome.move_key[2]:
-                        yellow_gnome.move_right = True
-                if event.key == red_gnome.move_key[3]:
-                    red_gnome.go_down = True
-                if event.key == green_gnome.move_key[3]:
-                    green_gnome.go_down = True
-                if blue_gnome:
-                    if event.key == blue_gnome.move_key[3]:
-                        blue_gnome.go_down = True
-                if yellow_gnome:
-                    if event.key == yellow_gnome.move_key[3]:
-                        yellow_gnome.go_down = True
+                if event.key == 27:
+                    if paused:
+                        paused = False
+                        pygame.mixer.music.unpause()
+                    else:
+                        paused = True
+                        pygame.mixer.music.pause()
+                if not paused:
+                    if event.key == red_gnome.move_key[0] and red_gnome.jumping is False:
+                        red_gnome.jumping = True
+                        pygame.mixer.Sound.play(pygame.mixer.Sound(f'data/sound/Jump{random.randint(1,4)}.wav'))
+                    if event.key == green_gnome.move_key[0] and green_gnome.jumping is False:
+                        green_gnome.jumping = True
+                        pygame.mixer.Sound.play(pygame.mixer.Sound(f'data/sound/Jump{random.randint(1,4)}.wav'))
+                    if blue_gnome:
+                        if event.key == blue_gnome.move_key[0] and blue_gnome.jumping is False:
+                            blue_gnome.jumping = True
+                            pygame.mixer.Sound.play(pygame.mixer.Sound(f'data/sound/Jump{random.randint(1,4)}.wav'))
+                    if yellow_gnome:
+                        if event.key == yellow_gnome.move_key[0] and yellow_gnome.jumping is False:
+                            yellow_gnome.jumping = True
+                            pygame.mixer.Sound.play(pygame.mixer.Sound(f'data/sound/Jump{random.randint(1,4)}.wav'))
+                    if event.key == red_gnome.move_key[1]:
+                        red_gnome.move_left = True
+                    if event.key == green_gnome.move_key[1]:
+                        green_gnome.move_left = True
+                    if blue_gnome:
+                        if event.key == blue_gnome.move_key[1]:
+                            blue_gnome.move_left = True
+                    if yellow_gnome:
+                        if event.key == yellow_gnome.move_key[1]:
+                            yellow_gnome.move_left = True
+                    if event.key == red_gnome.move_key[2]:
+                        red_gnome.move_right = True
+                    if event.key == green_gnome.move_key[2]:
+                        green_gnome.move_right = True
+                    if blue_gnome:
+                        if event.key == blue_gnome.move_key[2]:
+                            blue_gnome.move_right = True
+                    if yellow_gnome:
+                        if event.key == yellow_gnome.move_key[2]:
+                            yellow_gnome.move_right = True
+                    if event.key == red_gnome.move_key[3]:
+                        red_gnome.go_down = True
+                    if event.key == green_gnome.move_key[3]:
+                        green_gnome.go_down = True
+                    if blue_gnome:
+                        if event.key == blue_gnome.move_key[3]:
+                            blue_gnome.go_down = True
+                    if yellow_gnome:
+                        if event.key == yellow_gnome.move_key[3]:
+                            yellow_gnome.go_down = True
             if event.type == pygame.KEYUP:
                 if event.key == red_gnome.move_key[1]:
                     red_gnome.move_left = False
@@ -330,21 +349,24 @@ def game_loop(screen, playersnum, lp):
                 if yellow_gnome:
                     if event.key == yellow_gnome.move_key[2]:
                         yellow_gnome.move_right = False
-
-        for gnome in gnomes:
-            gnome.move(gnomes)
-            gnome.on_land()
-            if gnome.dead:
-                gnomes.remove(gnome)
-                player_group.remove(gnome)
-            for other in gnomes:
-                if pygame.sprite.collide_rect(gnome, other) and gnome != other:
-                    gnome.rect.y -= 31
-                    gnome.jumping = True
-                    gnome.velocity_index = 0
-                    break
+        if not paused:
+            for gnome in gnomes:
+                gnome.move(gnomes)
+                gnome.on_land()
+                if gnome.dead:
+                    gnomes.remove(gnome)
+                    player_group.remove(gnome)
+                for other in gnomes:
+                    if pygame.sprite.collide_rect(gnome, other) and gnome != other:
+                        gnome.rect.y -= 31
+                        gnome.jumping = True
+                        gnome.velocity_index = 10
+                        break
         tiles_group.draw(screen)
         player_group.draw(screen)
+        if paused:
+            pass
+        # working on it
         pygame.display.flip()
         clock.tick(FPS)
 
