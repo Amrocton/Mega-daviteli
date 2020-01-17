@@ -4,10 +4,11 @@ import random
 import sys
 
 gnomes = []
+is_start = False
 pygame.init()
 screen = pygame.display.set_mode((800, 500))
 clock = pygame.time.Clock()
-levelnum = random.randint(1, 2)
+levelnum = random.randint(1, 4)
 back_surf = pygame.image.load(f'data/background{levelnum}.jpg')
 back_rect = back_surf.get_rect(center=(400, 250))
 # вверх-влево-вправо-вниз
@@ -19,6 +20,9 @@ hit_sound = pygame.mixer.Sound('data/sound/Hit.wav')
 select_sound = pygame.mixer.Sound('data/sound/Select.wav')
 press_sound = pygame.mixer.Sound('data/sound/Press.wav')
 
+
+def starting():
+    is_start = True
 
 def obj_upper(faller, x1, y1, w1, h1, x2, y2, w2, h2):
     return y2 <= y1 + h1 <= y2 + h2 and (
@@ -209,6 +213,8 @@ FPS = 60
 
 
 def start_screen(screen):
+    pygame.mixer.music.load('data/sound/Intro.mp3')
+    pygame.mixer.music.play()
     intro_text = ["Мар10", "",
                   "Правила игры:",
                   "По газону МОЖНО ходить",
@@ -233,14 +239,20 @@ def start_screen(screen):
                 terminate()
             elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                 unstart = False
+        if not pygame.mixer.music.get_busy():
+            pygame.mixer.music.load('data/sound/Intro_loop.mp3')
+            pygame.mixer.music.play(-1)
         pygame.display.flip()
         clock.tick(FPS)
     game_start(screen)
 
 
 def game_start(screen):
+    is_start = False
+    pygame.mixer.music.load('data/sound/Menu.mp3')
+    pygame.mixer.music.play(-1)
     lp = 3
-    while True:
+    while not is_start:
         back_surf = pygame.image.load(f'data/background{levelnum}.jpg')
         back_rect = back_surf.get_rect(center=(400, 250))
         screen.blit(back_surf, back_rect)
@@ -371,4 +383,4 @@ def game_loop(screen, playersnum, lp):
         clock.tick(FPS)
 
 
-game_loop(screen, 4, 10)
+start_screen(screen)
