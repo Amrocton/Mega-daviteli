@@ -5,12 +5,15 @@ import sys
 
 gnomes = []
 is_start = False
+paused = False
+lp = 2
+playersnum = 2
 pygame.init()
 screen = pygame.display.set_mode((800, 500))
 clock = pygame.time.Clock()
-levelnum = random.randint(1, 4)
-back_surf = pygame.image.load(f'data/background{levelnum}.jpg')
+back_surf = pygame.image.load(f'data/background{2}.jpg')
 back_rect = back_surf.get_rect(center=(400, 250))
+levelnum = random.randint(1, 4)
 # вверх-влево-вправо-вниз
 move_keys = {'red': [pygame.K_w, pygame.K_a, pygame.K_d, pygame.K_s],
              'green': [pygame.K_p, pygame.K_l, 39, 59],
@@ -22,7 +25,37 @@ press_sound = pygame.mixer.Sound('data/sound/Press.wav')
 
 
 def starting():
+    global is_start
     is_start = True
+
+
+def secret():
+    chika = pygame.image.load('data/scd.gif').convert_alpha()
+    pygame.mixer.music.load('data/sound/scd.mp3')
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy():
+        screen.fill((0, 0, 0))
+        screen.blit(chika, chika.get_rect(center=(400, 250)))
+        pygame.display.flip()
+    terminate()
+
+
+
+
+def unpause():
+    global paused
+    paused = False
+    pygame.mixer.music.load('data/sound/Kirby.mp3')
+    pygame.mixer.music.play(-1)
+
+
+def restart():
+    all_sprites.empty()
+    land_group.empty()
+    player_group.empty()
+    tiles_group.empty()
+    game_loop(screen)
+
 
 def obj_upper(faller, x1, y1, w1, h1, x2, y2, w2, h2):
     return y2 <= y1 + h1 <= y2 + h2 and (
@@ -39,14 +72,14 @@ def button(msg, x, y, w, h, ic, ac, action=None):
     click = pygame.mouse.get_pressed()
     if x + w > mouse[0] > x and y + h > mouse[1] > y:
         pygame.draw.rect(screen, ac, (x, y, w, h))
-        pygame.mixer.Sound.play(select_sound)
-        if click[0] == 1 and action != None:
+        # pygame.mixer.Sound.play(select_sound)!!!fix!!!
+        if click[0] == 1 and action is not None:
             pygame.mixer.Sound.play(press_sound)
             action()
     else:
         pygame.draw.rect(screen, ic, (x, y, w, h))
 
-    smallText = pygame.font.SysFont("comicsansms", 20)
+    smallText = pygame.font.Font('data/17990.ttf', 20)
     textSurf, textRect = text_objects(msg, smallText)
     textRect.center = ((x + (w / 2)), (y + (h / 2)))
     screen.blit(textSurf, textRect)
@@ -248,21 +281,27 @@ def start_screen(screen):
 
 
 def game_start(screen):
+    global is_start, lp, playersnum
     is_start = False
     pygame.mixer.music.load('data/sound/Menu.mp3')
     pygame.mixer.music.play(-1)
-    lp = 3
     while not is_start:
         back_surf = pygame.image.load(f'data/background{levelnum}.jpg')
         back_rect = back_surf.get_rect(center=(400, 250))
+        dim_screen = pygame.Surface(screen.get_size()).convert_alpha()
+        dim_screen.fill((0, 0, 0, 180))
         screen.blit(back_surf, back_rect)
+        screen.blit(dim_screen, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
         pygame.display.flip()
+    game_loop(screen)
 
 
-def game_loop(screen, playersnum, lp):
+def game_loop(screen):
+    global paused, lp, playersnum
+    levelnum = random.randint(1, 4)
     paused = False
     pygame.mixer.music.load('data/sound/Kirby.mp3')
     pygame.mixer.music.play(-1)
@@ -270,6 +309,8 @@ def game_loop(screen, playersnum, lp):
     spawn_points = generate_level(load_level(str(levelnum)))
     first_spawn = spawn_points.copy()
     random.shuffle(first_spawn)
+    dim_screen = pygame.Surface(screen.get_size()).convert_alpha()
+    dim_screen.fill((0, 0, 0, 180))
     blue_gnome, yellow_gnome, gnomes = None, None, []
     red_gnome = Player(lp, 'red', spawn_points, first_spawn.pop(0))
     green_gnome = Player(lp, 'green', spawn_points, first_spawn.pop(0))
@@ -290,56 +331,60 @@ def game_loop(screen, playersnum, lp):
             if event.type == pygame.KEYDOWN:
                 if event.key == 27:
                     if paused:
-                        paused = False
-                        pygame.mixer.music.unpause()
+                        unpause()
                     else:
                         paused = True
-                        pygame.mixer.music.pause()
+                        pygame.mixer.music.load('data/sound/Pause.mp3')
+                        pygame.mixer.music.play(-1)
                 if not paused:
                     if event.key == red_gnome.move_key[0] and red_gnome.jumping is False:
                         red_gnome.jumping = True
-                        pygame.mixer.Sound.play(pygame.mixer.Sound(f'data/sound/Jump{random.randint(1,4)}.wav'))
+                        pygame.mixer.Sound.play(
+                            pygame.mixer.Sound(f'data/sound/Jump{random.randint(1, 4)}.wav'))
                     if event.key == green_gnome.move_key[0] and green_gnome.jumping is False:
                         green_gnome.jumping = True
-                        pygame.mixer.Sound.play(pygame.mixer.Sound(f'data/sound/Jump{random.randint(1,4)}.wav'))
+                        pygame.mixer.Sound.play(
+                            pygame.mixer.Sound(f'data/sound/Jump{random.randint(1, 4)}.wav'))
                     if blue_gnome:
                         if event.key == blue_gnome.move_key[0] and blue_gnome.jumping is False:
                             blue_gnome.jumping = True
-                            pygame.mixer.Sound.play(pygame.mixer.Sound(f'data/sound/Jump{random.randint(1,4)}.wav'))
+                            pygame.mixer.Sound.play(
+                                pygame.mixer.Sound(f'data/sound/Jump{random.randint(1, 4)}.wav'))
                     if yellow_gnome:
                         if event.key == yellow_gnome.move_key[0] and yellow_gnome.jumping is False:
                             yellow_gnome.jumping = True
-                            pygame.mixer.Sound.play(pygame.mixer.Sound(f'data/sound/Jump{random.randint(1,4)}.wav'))
-                    if event.key == red_gnome.move_key[1]:
-                        red_gnome.move_left = True
-                    if event.key == green_gnome.move_key[1]:
-                        green_gnome.move_left = True
-                    if blue_gnome:
-                        if event.key == blue_gnome.move_key[1]:
-                            blue_gnome.move_left = True
-                    if yellow_gnome:
-                        if event.key == yellow_gnome.move_key[1]:
-                            yellow_gnome.move_left = True
-                    if event.key == red_gnome.move_key[2]:
-                        red_gnome.move_right = True
-                    if event.key == green_gnome.move_key[2]:
-                        green_gnome.move_right = True
-                    if blue_gnome:
-                        if event.key == blue_gnome.move_key[2]:
-                            blue_gnome.move_right = True
-                    if yellow_gnome:
-                        if event.key == yellow_gnome.move_key[2]:
-                            yellow_gnome.move_right = True
-                    if event.key == red_gnome.move_key[3]:
-                        red_gnome.go_down = True
-                    if event.key == green_gnome.move_key[3]:
-                        green_gnome.go_down = True
-                    if blue_gnome:
-                        if event.key == blue_gnome.move_key[3]:
-                            blue_gnome.go_down = True
-                    if yellow_gnome:
-                        if event.key == yellow_gnome.move_key[3]:
-                            yellow_gnome.go_down = True
+                            pygame.mixer.Sound.play(
+                                pygame.mixer.Sound(f'data/sound/Jump{random.randint(1, 4)}.wav'))
+                if event.key == red_gnome.move_key[1]:
+                    red_gnome.move_left = True
+                if event.key == green_gnome.move_key[1]:
+                    green_gnome.move_left = True
+                if blue_gnome:
+                    if event.key == blue_gnome.move_key[1]:
+                        blue_gnome.move_left = True
+                if yellow_gnome:
+                    if event.key == yellow_gnome.move_key[1]:
+                        yellow_gnome.move_left = True
+                if event.key == red_gnome.move_key[2]:
+                    red_gnome.move_right = True
+                if event.key == green_gnome.move_key[2]:
+                    green_gnome.move_right = True
+                if blue_gnome:
+                    if event.key == blue_gnome.move_key[2]:
+                        blue_gnome.move_right = True
+                if yellow_gnome:
+                    if event.key == yellow_gnome.move_key[2]:
+                        yellow_gnome.move_right = True
+                if event.key == red_gnome.move_key[3]:
+                    red_gnome.go_down = True
+                if event.key == green_gnome.move_key[3]:
+                    green_gnome.go_down = True
+                if blue_gnome:
+                    if event.key == blue_gnome.move_key[3]:
+                        blue_gnome.go_down = True
+                if yellow_gnome:
+                    if event.key == yellow_gnome.move_key[3]:
+                        yellow_gnome.go_down = True
             if event.type == pygame.KEYUP:
                 if event.key == red_gnome.move_key[1]:
                     red_gnome.move_left = False
@@ -377,10 +422,14 @@ def game_loop(screen, playersnum, lp):
         tiles_group.draw(screen)
         player_group.draw(screen)
         if paused:
-            pass
-        # working on it
+            screen.blit(dim_screen, (0, 0))
+            button('Continue', 330, 100, 120, 50, (245, 245, 220), (145, 145, 120), unpause)
+            button('Restart', 330, 200, 120, 50, (245, 245, 220), (145, 145, 120), restart)
+            button('Quit to menu', 330, 300, 120, 50, (245, 245, 220), (145, 145, 120), restart)
+            button('Quit the game', 330, 400, 120, 50, (245, 245, 220), (145, 145, 120), terminate)
+            button('Secret', 780, 480, 20, 20, (245, 245, 220), (145, 145, 120), secret)
         pygame.display.flip()
         clock.tick(FPS)
 
 
-start_screen(screen)
+game_loop(screen)
