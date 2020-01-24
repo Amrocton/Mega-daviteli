@@ -8,8 +8,10 @@ gnomes = []
 is_start = False
 paused = False
 lp = 3
-GRAVITY = 2
+GRAVITY = 1
 playersnum = 2
+m_vol = 50
+s_vol = 50
 pygame.init()
 screen = pygame.display.set_mode((800, 500), pygame.FULLSCREEN)
 clock = pygame.time.Clock()
@@ -17,6 +19,10 @@ back_surf = pygame.image.load(f'data/background{2}.jpg')
 back_rect = back_surf.get_rect(center=(400, 250))
 levelnum = random.randint(1, 4)
 # вверх-влево-вправо-вниз
+colors = {'red': (255, 0, 0),
+          'green': (0, 255, 0),
+          'blue': (0, 0, 255),
+          'yellow': pygame.color.Color('yellow')}
 move_keys = {'red': [pygame.K_w, pygame.K_a, pygame.K_d, pygame.K_s],
              'green': [pygame.K_p, pygame.K_l, 39, 59],
              'blue': [pygame.K_y, pygame.K_g, pygame.K_j, pygame.K_h],
@@ -31,6 +37,22 @@ def starting():
     is_start = True
 
 
+'''def volume_update():
+    pygame.mixer.music.set_volume(m_vol)
+    pygame.mixer.Sound.set_volume(s_vol)'''
+
+
+def new_game():
+    global lp, playersnum
+    all_sprites.empty()
+    land_group.empty()
+    player_group.empty()
+    tiles_group.empty()
+    lp = 3
+    playersnum = 2
+    game_start(screen)
+
+
 def to_intro():
     start_screen(screen)
 
@@ -43,9 +65,9 @@ def to_menu():
     game_start(screen)
 
 
-
 def secret():
     chika = GIFImage('data/scd.gif')
+    shark = GIFImage('data/shark.gif')
     pygame.mixer.music.load('data/sound/scd.mp3')
     pygame.mixer.music.play()
     while pygame.mixer.music.get_busy():
@@ -56,8 +78,9 @@ def secret():
                 create_particles(pygame.mouse.get_pos())
 
         all_particles.update()
-        screen.fill((0, 0, 0))
+        screen.fill((255, 255, 255))
         chika.render(screen, (0, 0))
+        shark.render(screen, (520, 0))
         all_particles.draw(screen)
         pygame.display.flip()
         clock.tick(50)
@@ -76,6 +99,7 @@ def restart():
     land_group.empty()
     player_group.empty()
     tiles_group.empty()
+
     game_loop(screen)
 
 
@@ -93,7 +117,7 @@ def lifes_change_add():
         lp = 15
 
 
-def lifes_change_add():
+def lifes_change_decrease():
     global lp
     lp -= 1
     if lp < 1:
@@ -120,7 +144,6 @@ def button(msg, x, y, w, h, ic, ac, action=None):
     click = pygame.mouse.get_pressed()
     if x + w > mouse[0] > x and y + h > mouse[1] > y:
         pygame.draw.rect(screen, ac, (x, y, w, h))
-        # pygame.mixer.Sound.play(select_sound)!!!fix!!!
         if click[0] == 1 and action is not None:
             if not button.is_clicked:
                 pygame.mixer.Sound.play(press_sound)
@@ -217,6 +240,7 @@ class Tile(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     def __init__(self, lp, color, spawn_points, first_spawn):
         super().__init__(player_group, all_sprites)
+        self.color = color
         self.lifes = lp
         self.go_down = False
         self.dead = False
@@ -312,6 +336,7 @@ def create_particles(position):
     for _ in range(particle_count):
         Particle(position, random.choice(numbers), random.choice(numbers))
 
+
 all_particles = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -339,9 +364,11 @@ def generate_level(level):
 
 
 FPS = 60
+'''volume_update()'''
 
 
 def start_screen(screen):
+    pygame.mouse.set_pos([0, 0])
     pygame.mixer.music.load('data/sound/Intro.mp3')
     pygame.mixer.music.play()
     intro_text = ["MEGA", "                  DAVITELI!!!",
@@ -378,6 +405,7 @@ def start_screen(screen):
 
 def game_start(screen):
     global is_start, lp, playersnum
+    pygame.mouse.set_pos([0, 0])
     is_start = False
     pygame.mixer.music.load('data/sound/Menu.mp3')
     pygame.mixer.music.play(-1)
@@ -392,9 +420,15 @@ def game_start(screen):
             if event.type == pygame.QUIT:
                 terminate()
         button('Start the game!', 300, 100, 150, 50, (245, 245, 220), (145, 145, 120), starting)
-        button(f'Players:{playersnum}', 300, 200, 80, 40, (245, 245, 220), (145, 145, 120),
+        button(f'Players:{playersnum}', 250, 200, 80, 40, (245, 245, 220), (145, 145, 120),
                players_change)
         button(f'Lifes:{lp}', 420, 200, 80, 40, (245, 245, 220), (145, 145, 120), lifes_change_drop)
+        button('-', 370, 200, 40, 40, (245, 245, 220), (145, 145, 120), lifes_change_decrease)
+        button('+', 510, 200, 40, 40, (245, 245, 220), (145, 145, 120), lifes_change_add)
+        button(f'Music:{m_vol}', 620, 100, 80, 40, (245, 245, 220), (145, 145, 120),
+               lifes_change_drop)
+        button('-', 570, 100, 40, 40, (245, 245, 220), (145, 145, 120), lifes_change_decrease)
+        button('+', 710, 100, 40, 40, (245, 245, 220), (145, 145, 120), lifes_change_add)
         button('Quit to intro', 300, 300, 150, 50, (245, 245, 220), (145, 145, 120), to_intro)
         button('Quit the game', 300, 400, 150, 50, (245, 245, 220), (145, 145, 120), terminate)
         button('Secret', 780, 480, 20, 20, (245, 245, 220), (145, 145, 120), secret)
@@ -404,6 +438,8 @@ def game_start(screen):
 
 def game_loop(screen):
     global paused, lp, playersnum
+    game_end = False
+    pygame.mouse.set_pos([0, 0])
     levelnum = random.randint(1, 4)
     paused = False
     pygame.mixer.music.load('data/sound/Kirby.mp3')
@@ -439,7 +475,7 @@ def game_loop(screen):
                         paused = True
                         pygame.mixer.music.load('data/sound/Pause.mp3')
                         pygame.mixer.music.play(-1)
-                if not paused:
+                if not paused and not game_end:
                     if event.key == red_gnome.move_key[0] and red_gnome.jumping is False:
                         red_gnome.jumping = True
                         pygame.mixer.Sound.play(
@@ -509,7 +545,7 @@ def game_loop(screen):
                 if yellow_gnome:
                     if event.key == yellow_gnome.move_key[2]:
                         yellow_gnome.move_right = False
-        if not paused:
+        if not paused and not game_end:
             for gnome in gnomes:
                 gnome.move(gnomes)
                 gnome.on_land()
@@ -524,13 +560,28 @@ def game_loop(screen):
                         break
         tiles_group.draw(screen)
         player_group.draw(screen)
-        if paused:
+        if paused and not game_end:
             screen.blit(dim_screen, (0, 0))
             button('Continue', 330, 100, 120, 50, (245, 245, 220), (145, 145, 120), unpause)
             button('Restart', 330, 200, 120, 50, (245, 245, 220), (145, 145, 120), restart)
             button('Quit to menu', 330, 300, 120, 50, (245, 245, 220), (145, 145, 120), to_menu)
             button('Quit the game', 330, 400, 120, 50, (245, 245, 220), (145, 145, 120), terminate)
             button('Secret', 780, 480, 20, 20, (245, 245, 220), (145, 145, 120), secret)
+        if len(gnomes) == 1 and not game_end:
+            game_end = True
+            pygame.mixer.music.load('data/sound/Victory.mp3')
+            pygame.mixer.music.play()
+        if game_end:
+            screen.blit(dim_screen, (0, 0))
+            smallText = pygame.font.Font('data/18676.ttf', 30)
+            textSurf, textRect = text_objects(f'{gnomes[0].color.upper()} WINS!', smallText)
+            textRect.center = (400), (60)
+            textSurf = smallText.render(f'{gnomes[0].color.upper()} WINS!', True,
+                                        colors[gnomes[0].color])
+            screen.blit(textSurf, textRect)
+            button('Restart', 200, 400, 120, 50, (245, 245, 220), (145, 145, 120), restart)
+            button('New game', 330, 400, 120, 50, (245, 245, 220), (145, 145, 120), new_game)
+            button('Quit the game', 460, 400, 120, 50, (245, 245, 220), (145, 145, 120), terminate)
         pygame.display.flip()
         clock.tick(FPS)
 
