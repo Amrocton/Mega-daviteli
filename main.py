@@ -2,14 +2,16 @@ import pygame
 import os
 import random
 import sys
+from GIFImage import GIFImage
 
 gnomes = []
 is_start = False
 paused = False
-lp = 2
+lp = 3
+GRAVITY = 2
 playersnum = 2
 pygame.init()
-screen = pygame.display.set_mode((800, 500))
+screen = pygame.display.set_mode((800, 500), pygame.FULLSCREEN)
 clock = pygame.time.Clock()
 back_surf = pygame.image.load(f'data/background{2}.jpg')
 back_rect = back_surf.get_rect(center=(400, 250))
@@ -29,17 +31,37 @@ def starting():
     is_start = True
 
 
+def to_intro():
+    start_screen(screen)
+
+
+def to_menu():
+    all_sprites.empty()
+    land_group.empty()
+    player_group.empty()
+    tiles_group.empty()
+    game_start(screen)
+
+
+
 def secret():
-    chika = pygame.image.load('data/scd.gif').convert_alpha()
+    chika = GIFImage('data/scd.gif')
     pygame.mixer.music.load('data/sound/scd.mp3')
     pygame.mixer.music.play()
     while pygame.mixer.music.get_busy():
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                create_particles(pygame.mouse.get_pos())
+
+        all_particles.update()
         screen.fill((0, 0, 0))
-        screen.blit(chika, chika.get_rect(center=(400, 250)))
+        chika.render(screen, (0, 0))
+        all_particles.draw(screen)
         pygame.display.flip()
+        clock.tick(50)
     terminate()
-
-
 
 
 def unpause():
@@ -55,6 +77,32 @@ def restart():
     player_group.empty()
     tiles_group.empty()
     game_loop(screen)
+
+
+def players_change():
+    global playersnum
+    playersnum = (playersnum + 1) % 5
+    if playersnum == 0:
+        playersnum = 2
+
+
+def lifes_change_add():
+    global lp
+    lp += 1
+    if lp > 15:
+        lp = 15
+
+
+def lifes_change_add():
+    global lp
+    lp -= 1
+    if lp < 1:
+        lp = 1
+
+
+def lifes_change_drop():
+    global lp
+    lp = 3
 
 
 def obj_upper(faller, x1, y1, w1, h1, x2, y2, w2, h2):
@@ -74,8 +122,12 @@ def button(msg, x, y, w, h, ic, ac, action=None):
         pygame.draw.rect(screen, ac, (x, y, w, h))
         # pygame.mixer.Sound.play(select_sound)!!!fix!!!
         if click[0] == 1 and action is not None:
-            pygame.mixer.Sound.play(press_sound)
-            action()
+            if not button.is_clicked:
+                pygame.mixer.Sound.play(press_sound)
+                action()
+                button.is_clicked = True
+        else:
+            button.is_clicked = False
     else:
         pygame.draw.rect(screen, ic, (x, y, w, h))
 
@@ -83,6 +135,9 @@ def button(msg, x, y, w, h, ic, ac, action=None):
     textSurf, textRect = text_objects(msg, smallText)
     textRect.center = ((x + (w / 2)), (y + (h / 2)))
     screen.blit(textSurf, textRect)
+
+
+button.is_clicked = False
 
 
 def terminate():
@@ -117,6 +172,38 @@ velocity = list(
      -2, -1, 0, 1, 2, 3, 5, 8, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16, 16.5, 17, 17.5, 18.5, 19,
      20.5]
 )
+screen_rect = (0, 0, 800, 500)
+
+
+class Particle(pygame.sprite.Sprite):
+    # сгенерируем частицы разного размера
+    fire = [load_image("heart.png")]
+    for scale in (5, 10, 20):
+        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
+
+    def __init__(self, pos, dx, dy):
+        super().__init__(all_particles)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        # у каждой частицы своя скорость — это вектор
+        self.velocity = [dx, dy]
+        # и свои координаты
+        self.rect.x, self.rect.y = pos
+
+        # гравитация будет одинаковой (значение константы)
+        self.gravity = GRAVITY
+
+    def update(self):
+        # применяем гравитационный эффект:
+        # движение с ускорением под действием гравитации
+        self.velocity[1] += self.gravity
+        # перемещаем частицу
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        # убиваем, если частица ушла за экран
+        if not self.rect.colliderect(screen_rect):
+            self.kill()
 
 
 class Tile(pygame.sprite.Sprite):
@@ -146,8 +233,8 @@ class Player(pygame.sprite.Sprite):
         self.move_key = move_keys[color]
 
     def rebirth(self):
+        self.lifes -= 1
         if self.lifes != 0:
-            self.lifes -= 1
             self.jumping = False
             self.falling = True
             self.velocity_index = 0
@@ -217,6 +304,15 @@ class Player(pygame.sprite.Sprite):
                 self.rect.x, self.rect.y = x, y
 
 
+def create_particles(position):
+    # количество создаваемых частиц
+    particle_count = 20
+    # возможные скорости
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        Particle(position, random.choice(numbers), random.choice(numbers))
+
+all_particles = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 land_group = pygame.sprite.Group()
@@ -248,13 +344,13 @@ FPS = 60
 def start_screen(screen):
     pygame.mixer.music.load('data/sound/Intro.mp3')
     pygame.mixer.music.play()
-    intro_text = ["Мар10", "",
+    intro_text = ["MEGA", "                  DAVITELI!!!",
                   "Правила игры:",
-                  "По газону МОЖНО ходить",
-                  "Коробки по два метра в высоту, навернёшься",
-                  "Прежде чем начать, введите название уровня в консоли!!!"]
+                  "Прыгай противнику на голову!",
+                  "Но будь осторожен:",
+                  "Тебя могут втоптать тоже!!!",
+                  'Последний игрок победил!!!']
     screen.fill(pygame.Color('darkseagreen'))
-    screen.blit(back_surf, back_rect)
     font = pygame.font.Font(None, 30)
     text_coord = 50
     for line in intro_text:
@@ -295,6 +391,13 @@ def game_start(screen):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
+        button('Start the game!', 300, 100, 150, 50, (245, 245, 220), (145, 145, 120), starting)
+        button(f'Players:{playersnum}', 300, 200, 80, 40, (245, 245, 220), (145, 145, 120),
+               players_change)
+        button(f'Lifes:{lp}', 420, 200, 80, 40, (245, 245, 220), (145, 145, 120), lifes_change_drop)
+        button('Quit to intro', 300, 300, 150, 50, (245, 245, 220), (145, 145, 120), to_intro)
+        button('Quit the game', 300, 400, 150, 50, (245, 245, 220), (145, 145, 120), terminate)
+        button('Secret', 780, 480, 20, 20, (245, 245, 220), (145, 145, 120), secret)
         pygame.display.flip()
     game_loop(screen)
 
@@ -425,11 +528,11 @@ def game_loop(screen):
             screen.blit(dim_screen, (0, 0))
             button('Continue', 330, 100, 120, 50, (245, 245, 220), (145, 145, 120), unpause)
             button('Restart', 330, 200, 120, 50, (245, 245, 220), (145, 145, 120), restart)
-            button('Quit to menu', 330, 300, 120, 50, (245, 245, 220), (145, 145, 120), restart)
+            button('Quit to menu', 330, 300, 120, 50, (245, 245, 220), (145, 145, 120), to_menu)
             button('Quit the game', 330, 400, 120, 50, (245, 245, 220), (145, 145, 120), terminate)
             button('Secret', 780, 480, 20, 20, (245, 245, 220), (145, 145, 120), secret)
         pygame.display.flip()
         clock.tick(FPS)
 
 
-game_loop(screen)
+start_screen(screen)
