@@ -726,7 +726,8 @@ def game_loop(screen):
             for gnome in gnomes:
                 gnome.move(gnomes)
                 gnome.on_land()
-                textRed, textRedRect = text_objects(f'{gnome.color.upper()}:{gnome.lifes}', smallText)
+                textRed, textRedRect = text_objects(f'{gnome.color.upper()}:{gnome.lifes}',
+                                                    smallText)
                 textRedRect.center = gnome_lifes_table_move[gnome.color]
                 textRed = smallText.render(f'{gnome.color.upper()}:{gnome.lifes}', True,
                                            (0, 0, 0))
